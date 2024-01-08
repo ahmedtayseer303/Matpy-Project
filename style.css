@@ -43,7 +43,7 @@ a:visited {
 
 /* SIDEBAR */
 .message {
-  transform: translate(-50%, 1rem);
+  transform: translate(-50%, 2.5rem);
   opacity: 1;
   pointer-events: auto;
   visibility: visible;
@@ -367,7 +367,7 @@ a:visited {
 
 .tooltip.tooltip--location {
   top: -4rem;
-  left: 0;
+  left: 1rem;
   transform: translate(-50%, -50%);
   background-color: var(--color-dark--2);
   color: var(--color-light--2);

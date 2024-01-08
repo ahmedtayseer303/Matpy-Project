@@ -122,8 +122,8 @@ class App {
 
     // map is the id of the div in html, 13 is the zoom level
     this.#map = L.map('map').setView(coords, 13);
-    //BUG when there is markers the view is near to last one instead of the cuurent coords
-    //solution1: setview must be done after adding markers in line 104 by (async) as
+    // When there is markers the view is near to last one instead of the cuurent coords
+    //solution1: setview must be done after adding markers
     //solution2: remove focusing the map to the pinned marker after adding it by options
 
     // tiles style
@@ -136,13 +136,15 @@ class App {
 
     this.#renderMessage('👇 Click on any location to add a new workout');
 
-    // this.#workouts took value in the method that called after getPosition in the consturnctor (due to async)
+    // this.#workouts took value in the method that called after getPosition in getLocalStorage func which will be executed first as the current func is a callback after aysnc operation
     this.#workouts.forEach(workout => {
       this.#renderWorkoutMarker(workout); // can't be functoin() instead of arrow func as 'this' will undefined
     });
 
     // show all wokouts on map
-    // this.#showAllmarkers();
+    this.#workouts.length >= 1
+      ? this.#showAllmarkers()
+      : this.#map.setView(coords, 13);
   }
 
   #moveToCurrLocation(position) {
@@ -372,7 +374,7 @@ class App {
 
     this.#workouts = JSON.parse(workouts); // parse string as js code
     this.#showWorkouts();
-    // Can't set pin points here. this must be done after this.#map take value due to async
+    // Can't set pin points here. this must be done after this.#map take value in the asyncronous operation.
   }
 
   #deleteWorkout(workoutEl) {
@@ -431,44 +433,52 @@ class App {
     this.#showWorkouts(sorted);
   }
 
+  // #farestTwoPoints() {
+  //   // Get the biggest distance bet 2 worktouts
+  //   let distance;
+  //   let max = 0;
+  //   let indices = [];
+  //   for (let i = 0; i < this.#workouts.length; i++)
+  //     for (let j = i + 1; j < this.#workouts.length; j++) {
+  //       distance = this.#map.distance(
+  //         this.#workouts[i].coords,
+  //         this.#workouts[j].coords
+  //       );
+  //       if (distance > max) {
+  //         max = distance;
+  //         indices = [i, j];
+  //       }
+  //     }
+  //   return [this.#workouts[indices[0]], this.#workouts[indices[1]]];
+  // }
+
   #showAllmarkers() {
     if (!this.#map)
       return this.#renderMessage('⌛ Wait for loading the map...');
 
     // check for 1 or 0 on map
-    if (this.#workouts.length < 2)
-      return this.#renderMessage('🔴 Use when there are at least 2 workouts.');
+    if (this.#workouts.length < 1)
+      return this.#renderMessage('🔴 Use when there is at least 1 workout.');
 
-    // Get the biggest distance bet 2 worktouts
-    let distance;
-    let max = this.#map.distance(
-      this.#workouts[0].coords,
-      this.#workouts[1].coords
-    );
-    let indices = [0, 1];
-    for (let i = 0; i < this.#workouts.length; i++) {
-      for (let j = i + 1; j < this.#workouts.length; j++) {
-        distance = this.#map.distance(
-          this.#workouts[i].coords,
-          this.#workouts[j].coords
-        );
-        if (distance > max) {
-          max = distance;
-          indices = [i, j];
-        }
-      }
-    }
+    const allMarkers = this.#markers.map(m => m.getLatLng());
+    const bounds = L.latLngBounds(allMarkers);
+    this.#map.fitBounds(bounds, {
+      maxZoom: 16,
+      animate: true,
+      pin: {
+        duration: 1,
+      },
+    });
 
     // Fit the bounds of the 2 farest workouts
-    this.#map.fitBounds(
-      [this.#workouts[indices[0]].coords, this.#workouts[indices[1]].coords],
-      {
-        animate: true,
-        pin: {
-          duration: 1,
-        },
-      }
-    );
+    // const [workout1, workout2] = this.#farestTwoPoints();
+    // this.#map.fitBounds([workout1.coords, workout2.coords], {
+    //   // maxZoom: 11,
+    //   animate: true,
+    //   pin: {
+    //     duration: 1,
+    //   },
+    // });
   }
 
   reset() {
